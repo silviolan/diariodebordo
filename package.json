@@ -1,0 +1,22 @@
+{
+  "name": "raiz-digital",
+  "version": "1.0.0",
+  "description": "Raíz Digital — Diário de bordo. Diário de tarefas colaborativo com login, papel de administrador e checklist com datas.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.5"
+  }
+}

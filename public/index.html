@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#22543d" />
+    <meta name="description" content="Raíz Digital — Diário de bordo. Diário de tarefas da equipe." />
+    <title>Raíz Digital · Diário de bordo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322543d' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22V11'/%3E%3Cpath d='M12 13c0-3.2 2.4-5.4 5.2-5.4C17.2 10.8 15 13 12 13Z'/%3E%3Cpath d='M12 15.5c0-2.7-2.1-4.6-4.7-4.6C7.3 13.6 9.4 15.5 12 15.5Z'/%3E%3Cpath d='M8 22h8'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Marca / logo reutilizável -->
+    <template id="tpl-logo">
+      <span class="brand">
+        <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 22V11" />
+          <path d="M12 13c0-3.2 2.4-5.4 5.2-5.4C17.2 10.8 15 13 12 13Z" />
+          <path d="M12 15.5c0-2.7-2.1-4.6-4.7-4.6C7.3 13.6 9.4 15.5 12 15.5Z" />
+          <path d="M8 22h8" />
+        </svg>
+        <span class="brand__text">
+          <strong>Raíz Digital</strong>
+          <small>Diário de bordo</small>
+        </span>
+      </span>
+    </template>
+
+    <!-- ══════════════ TELA DE ACESSO ══════════════ -->
+    <main id="auth-view" class="auth" hidden>
+      <div class="auth__card">
+        <div class="auth__brand" data-logo></div>
+        <p class="auth__tagline">O diário de tarefas da equipe. Cada demanda no seu devido lugar.</p>
+
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" data-tab="login" role="tab">Entrar</button>
+          <button class="tab" data-tab="register" role="tab">Criar conta</button>
+        </div>
+
+        <!-- Entrar -->
+        <form id="form-login" class="form" novalidate>
+          <label class="field">
+            <span>E-mail</span>
+            <input type="email" name="email" autocomplete="email" required placeholder="voce@exemplo.com" />
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input type="password" name="password" autocomplete="current-password" required placeholder="••••••••" />
+          </label>
+          <button class="btn btn--primary btn--block" type="submit">Entrar</button>
+        </form>
+
+        <!-- Criar conta -->
+        <form id="form-register" class="form" novalidate hidden>
+          <label class="field">
+            <span>Nome</span>
+            <input type="text" name="name" autocomplete="name" required placeholder="Seu nome" />
+          </label>
+          <label class="field">
+            <span>E-mail</span>
+            <input type="email" name="email" autocomplete="email" required placeholder="voce@exemplo.com" />
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input type="password" name="password" autocomplete="new-password" required placeholder="Mínimo de 6 caracteres" />
+          </label>
+          <label class="field" id="field-code" hidden>
+            <span>Código de convite</span>
+            <input type="text" name="code" placeholder="Peça o código ao administrador" />
+          </label>
+          <button class="btn btn--primary btn--block" type="submit">Criar conta</button>
+        </form>
+
+        <p id="auth-error" class="auth__error" role="alert" hidden></p>
+      </div>
+      <footer class="auth__foot">Feito para a equipe da Raíz Digital.</footer>
+    </main>
+
+    <!-- ══════════════ APLICATIVO ══════════════ -->
+    <div id="app-view" hidden>
+      <header class="topbar">
+        <div class="topbar__inner">
+          <div data-logo></div>
+          <nav class="nav" id="nav" hidden>
+            <button class="nav__link is-active" data-view="mine">Minhas tarefas</button>
+            <button class="nav__link" data-view="team">Equipe</button>
+          </nav>
+          <div class="topbar__user">
+            <span class="who">
+              <span class="who__name" id="who-name"></span>
+              <span class="who__role" id="who-role"></span>
+            </span>
+            <button class="btn btn--ghost btn--sm" id="btn-logout" title="Sair">Sair</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Minhas tarefas -->
+      <main id="view-mine" class="page">
+        <section class="composer">
+          <h1 class="page__title">Diário de tarefas</h1>
+          <p class="page__sub">Anote uma demanda, defina a data e marque quando concluir.</p>
+
+          <form id="form-task" class="composer__form">
+            <input
+              class="composer__title"
+              name="title"
+              placeholder="O que precisa ser feito?"
+              autocomplete="off"
+              maxlength="200"
+              required
+            />
+            <div class="composer__row">
+              <input class="composer__desc" name="description" placeholder="Detalhes (opcional)" autocomplete="off" />
+              <label class="composer__date">
+                <span>Prazo</span>
+                <input type="date" name="due_date" />
+              </label>
+              <button class="btn btn--primary" type="submit">Adicionar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="board">
+          <div class="board__head">
+            <div class="filters" id="filters" role="tablist">
+              <button class="filter is-active" data-filter="all">Todas</button>
+              <button class="filter" data-filter="pending">Pendentes</button>
+              <button class="filter" data-filter="done">Concluídas</button>
+            </div>
+            <div class="progress" id="progress" hidden>
+              <div class="progress__bar"><span id="progress-fill"></span></div>
+              <span class="progress__label" id="progress-label"></span>
+            </div>
+          </div>
+
+          <ul class="tasks" id="task-list"></ul>
+          <div class="empty" id="task-empty" hidden></div>
+        </section>
+      </main>
+
+      <!-- Equipe (somente admin) -->
+      <main id="view-team" class="page" hidden>
+        <div class="team">
+          <aside class="team__side">
+            <h2 class="team__title">Equipe</h2>
+            <p class="team__sub">Acompanhe o diário de cada pessoa.</p>
+            <ul class="members" id="members"></ul>
+          </aside>
+          <section class="team__main">
+            <div class="team__header" id="team-header" hidden></div>
+            <ul class="tasks tasks--readonly" id="team-tasks"></ul>
+            <div class="empty" id="team-empty" hidden></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modal de edição -->
+    <div id="modal" class="modal" hidden>
+      <div class="modal__backdrop" data-close></div>
+      <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h3 id="modal-title">Editar tarefa</h3>
+        <form id="form-edit" class="form">
+          <input type="hidden" name="id" />
+          <label class="field">
+            <span>Tarefa</span>
+            <input type="text" name="title" maxlength="200" required />
+          </label>
+          <label class="field">
+            <span>Detalhes</span>
+            <textarea name="description" rows="3" placeholder="Opcional"></textarea>
+          </label>
+          <label class="field">
+            <span>Prazo</span>
+            <input type="date" name="due_date" />
+          </label>
+          <div class="modal__actions">
+            <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+            <button type="submit" class="btn btn--primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
