@@ -35,6 +35,7 @@ async function init() {
       email         TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       role          TEXT NOT NULL DEFAULT 'member',
+      cargo         TEXT,
       created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
@@ -48,12 +49,30 @@ async function init() {
       due_date    DATE,
       done        BOOLEAN NOT NULL DEFAULT false,
       done_at     TIMESTAMPTZ,
+      assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id         SERIAL PRIMARY KEY,
+      task_id    INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+      author_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      body       TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
+  // Migrações para bancos que já existiam antes destas colunas (idempotente).
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS cargo TEXT;`);
+  await pool.query(
+    `ALTER TABLE tasks ADD COLUMN IF NOT EXISTS assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`
+  );
+
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_comments_task ON comments(task_id);`);
 }
 
 module.exports = {

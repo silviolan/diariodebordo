@@ -156,7 +156,27 @@
           </aside>
           <section class="team__main">
             <div class="team__header" id="team-header" hidden></div>
-            <ul class="tasks tasks--readonly" id="team-tasks"></ul>
+
+            <form id="form-assign" class="composer__form composer__form--assign" hidden>
+              <input
+                class="composer__title"
+                name="title"
+                placeholder="Atribuir uma tarefa a esta pessoa…"
+                autocomplete="off"
+                maxlength="200"
+                required
+              />
+              <div class="composer__row">
+                <input class="composer__desc" name="description" placeholder="Detalhes (opcional)" autocomplete="off" />
+                <label class="composer__date">
+                  <span>Prazo</span>
+                  <input type="date" name="due_date" />
+                </label>
+                <button class="btn btn--primary" type="submit">Atribuir</button>
+              </div>
+            </form>
+
+            <ul class="tasks" id="team-tasks"></ul>
             <div class="empty" id="team-empty" hidden></div>
           </section>
         </div>

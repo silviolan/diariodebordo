@@ -15,10 +15,13 @@ enxerga o diário de todo mundo; cada membro vê apenas as próprias tarefas.
 - **Administrador** (você): vê a lista de todas as pessoas e o diário de cada uma.
 - **Membros**: veem e gerenciam somente as suas tarefas.
 - **Checklist com data**: título, detalhes, prazo e marcação de concluído (com carimbo de data/hora).
+- **Atribuir tarefas** (admin): crie uma demanda e destine a um colega — ela aparece na lista dele marcada como _"Atribuída por você"_.
+- **Cargo / função** (admin): defina a área de cada pessoa (ex.: Design, Back-end), visível no painel da Equipe.
+- **Comentários nas tarefas**: o admin e o dono da tarefa conversam nos comentários de cada demanda.
 - **Filtros** (todas / pendentes / concluídas), barra de progresso e destaque de tarefas atrasadas.
 - **Acesso por link**: o site é público, mas só entra quem tem conta — e você pode
   exigir um **código de convite** para liberar novos cadastros.
-- Interface responsável (funciona bem no celular) e com modo claro/escuro automático.
+- Interface responsiva (funciona bem no celular) e com modo claro/escuro automático.
 
 ---
 
@@ -46,21 +49,30 @@ git remote add origin https://github.com/SEU_USUARIO/raiz-digital.git
 git push -u origin main
 ```
 
-### 2. Criar o serviço no Render (jeito fácil — Blueprint)
+### 2. Criar o banco de dados (Neon — grátis e permanente)
 
-Este projeto já vem com um arquivo `render.yaml` que cria **o site e o banco de dados juntos**.
+O banco fica **fora do Render** de propósito (o Postgres grátis do Render só permite
+1 banco por conta e expira depois de um tempo). Use o **Neon**, que é grátis e não expira:
+
+1. Crie uma conta em [neon.tech](https://neon.tech) e um projeto novo.
+2. Copie a **connection string** (algo como
+   `postgresql://usuario:senha@ep-xxx.neon.tech/neondb?sslmode=require`). Guarde para o próximo passo.
+
+### 3. Criar o site no Render (Blueprint)
+
+O `render.yaml` cria o **site** e já configura tudo, menos o `DATABASE_URL` (que é o do Neon).
 
 1. Acesse [dashboard.render.com](https://dashboard.render.com) e clique em **New + → Blueprint**.
-2. Conecte o repositório que você acabou de subir.
-3. O Render lê o `render.yaml` e mostra o site (`raiz-digital`) + o banco (`raiz-digital-db`). Clique em **Apply**.
-4. Aguarde o build. Ao final, você recebe uma URL pública, por exemplo:
+2. Conecte o repositório que você subiu e clique em **Apply**.
+3. Abra o serviço `raiz-digital` → aba **Environment** → defina a variável
+   **`DATABASE_URL`** com a connection string do Neon e salve (isso dispara o deploy).
+4. Ao final você recebe uma URL pública, por exemplo
    `https://raiz-digital.onrender.com` — **esse é o link que você compartilha com a equipe.**
 
-> As variáveis `JWT_SECRET` (gerada automaticamente), `ADMIN_EMAIL` e `DATABASE_URL`
-> já são configuradas pelo blueprint. As tabelas do banco são criadas sozinhas na
-> primeira vez que o site sobe.
+> `JWT_SECRET` (gerada automaticamente) e `ADMIN_EMAIL` já vêm prontas do blueprint.
+> As tabelas do banco são criadas sozinhas na primeira vez que o site sobe.
 
-### 3. Virar administrador
+### 4. Virar administrador
 
 Abra o site e clique em **Criar conta** usando o e-mail definido em `ADMIN_EMAIL`
 (por padrão `silvio.neto@estudante.cear.ufpb.br`). Essa conta vira **administrador**
@@ -103,12 +115,16 @@ Acesse `http://localhost:3000`.
 
 ---
 
-## ⚠️ Sobre o banco grátis do Render
+## ⚠️ Por que o banco fica no Neon (e não no Render)
 
-O plano gratuito de PostgreSQL do Render **pode expirar depois de um período**.
-Para um banco gratuito e permanente, crie um no **Neon** (neon.tech), copie a
-_connection string_ e cole na variável `DATABASE_URL` do site no Render — o app
-funciona igual, sem mudar nenhuma linha de código.
+O PostgreSQL grátis do Render tem duas limitações: **só 1 banco grátis por conta** e ele
+**expira depois de um tempo**. Por isso o projeto usa um banco no **Neon** (grátis, permanente
+e independente do site) — assim seus dados ficam salvos a longo prazo e você pode migrar o
+site para outro host sem perder nada.
+
+Precisou trocar de banco? É só apontar a variável `DATABASE_URL` para o novo PostgreSQL
+(Neon, Supabase, Railway, etc.). Para levar os dados junto, exporte com
+`pg_dump "URL_ANTIGA" > backup.sql` e importe com `psql "URL_NOVA" < backup.sql`.
 
 ---
 
@@ -117,10 +133,10 @@ funciona igual, sem mudar nenhuma linha de código.
 ```
 .
 ├── server.js          # inicializa o servidor Express
-├── db.js              # conexão e criação das tabelas
+├── db.js              # conexão e tabelas (usuários, tarefas, comentários)
 ├── auth.js            # senhas, tokens e proteção das rotas
-├── api.js             # rotas da API (login, tarefas, admin)
-├── render.yaml        # blueprint do Render (site + banco)
+├── api.js             # rotas da API (login, tarefas, atribuições, comentários, admin)
+├── render.yaml        # blueprint do Render (cria o site)
 ├── .env.example       # modelo das variáveis de ambiente
 └── public/
     ├── index.html     # estrutura da página

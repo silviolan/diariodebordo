@@ -1,4 +1,7 @@
-# Blueprint do Render — cria o site e o banco de dados de uma vez.
+# Blueprint do Render — cria o site (web service).
+# O banco de dados NÃO é criado aqui: você define a variável DATABASE_URL
+# com a string de conexão de um Postgres (Neon recomendado — veja o README).
+# Motivo: o Render só permite 1 banco grátis por conta.
 # No Render: New + → "Blueprint" → conecte este repositório.
 services:
   - type: web
@@ -19,12 +22,7 @@ services:
         value: "true"
       - key: REGISTRATION_CODE
         sync: false                  # defina depois, no painel, se quiser exigir código
+      # Cole a string de conexão do seu Postgres (Neon, Supabase, ou um
+      # banco Postgres que você já tenha no Render). Defina no painel do Render.
       - key: DATABASE_URL
-        fromDatabase:
-          name: raiz-digital-db
-          property: connectionString
-
-databases:
-  - name: raiz-digital-db
-    plan: free
-    databaseName: raiz_digital
+        sync: false
