@@ -18,6 +18,8 @@ enxerga o diário de todo mundo; cada membro vê apenas as próprias tarefas.
 - **Atribuir tarefas** (admin): crie uma demanda e destine a um colega — ela aparece na lista dele marcada como _"Atribuída por você"_.
 - **Cargo / função** (admin): defina a área de cada pessoa (ex.: Design, Back-end), visível no painel da Equipe.
 - **Comentários nas tarefas**: o admin e o dono da tarefa conversam nos comentários de cada demanda.
+- **Quadro de avisos**: o admin publica notícias, links e informações que **toda a equipe** vê.
+  Pode **notificar por e-mail** (opcional — veja abaixo).
 - **Filtros** (todas / pendentes / concluídas), barra de progresso e destaque de tarefas atrasadas.
 - **Acesso por link**: o site é público, mas só entra quem tem conta — e você pode
   exigir um **código de convite** para liberar novos cadastros.
@@ -97,6 +99,27 @@ Depois de alterar uma variável, o Render reinicia o serviço sozinho.
 
 ---
 
+## 📣 Avisos por e-mail (opcional)
+
+O **quadro de avisos** funciona sozinho. Se você quiser que, ao publicar um aviso,
+a equipe também receba um **e-mail**, basta configurar um serviço de envio no Render
+(**Environment**). Sem essas variáveis, a opção de e-mail simplesmente não aparece.
+
+| Variável    | O que colocar                                                        |
+| ----------- | ------------------------------------------------------------------- |
+| `SMTP_HOST` | Servidor SMTP (ex.: `smtp-relay.brevo.com` ou `smtp.gmail.com`)      |
+| `SMTP_PORT` | `587` (padrão) ou `465`                                             |
+| `SMTP_USER` | Usuário/login do serviço                                            |
+| `SMTP_PASS` | Senha do serviço (no Gmail, use uma **"Senha de app"**)             |
+| `SMTP_FROM` | E-mail que aparece como remetente                                   |
+| `APP_URL`   | (opcional) endereço do site, incluído no rodapé do e-mail           |
+
+**Sugestões grátis:** [Brevo](https://www.brevo.com) (300 e-mails/dia, sem precisar de
+domínio) ou Gmail com "Senha de app". Obs.: e-mails de serviços gratuitos podem cair no
+spam no começo — peça à equipe para marcar como "não é spam".
+
+---
+
 ## 💻 Rodar na sua máquina (opcional)
 
 Você precisa de Node.js 18+ e um PostgreSQL (local ou na nuvem).
@@ -133,9 +156,10 @@ Precisou trocar de banco? É só apontar a variável `DATABASE_URL` para o novo 
 ```
 .
 ├── server.js          # inicializa o servidor Express
-├── db.js              # conexão e tabelas (usuários, tarefas, comentários)
+├── db.js              # conexão e tabelas (usuários, tarefas, comentários, avisos)
 ├── auth.js            # senhas, tokens e proteção das rotas
-├── api.js             # rotas da API (login, tarefas, atribuições, comentários, admin)
+├── api.js             # rotas da API (login, tarefas, avisos, admin)
+├── mailer.js          # envio de e-mail opcional (avisos)
 ├── render.yaml        # blueprint do Render (cria o site)
 ├── .env.example       # modelo das variáveis de ambiente
 └── public/

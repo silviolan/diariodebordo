@@ -6,8 +6,9 @@
 
 const state = {
   user: null,
-  config: { allowRegistration: true, requireCode: false },
+  config: { allowRegistration: true, requireCode: false, emailEnabled: false },
   tasks: [],
+  news: [],
   filter: 'all',
   view: 'mine',
   team: { members: [], selectedId: null, selectedUser: null, tasks: [] },
@@ -47,6 +48,8 @@ const ICONS = {
     '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.6-.8L3 21l1.9-5.4A8.4 8.4 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z"/></svg>',
   badge:
     '<svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>',
+  link:
+    '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>',
 };
 
 function escapeHtml(str) {
@@ -491,13 +494,78 @@ async function saveCargo(userId, value) {
   }
 }
 
+/* ── Quadro de avisos ──────────────────────────────────────────── */
+async function loadNews() {
+  const { announcements } = await api('/announcements');
+  state.news = announcements;
+  renderNews();
+}
+
+function announcementCard(n) {
+  const li = document.createElement('li');
+  li.className = 'news-item';
+  li.dataset.id = n.id;
+
+  const isAdmin = state.user.role === 'admin';
+  let linkHtml = '';
+  if (n.link) {
+    linkHtml = `<a class="news-item__link" href="${escapeHtml(n.link)}" target="_blank" rel="noopener noreferrer">
+      ${ICONS.link}${escapeHtml(n.link)}</a>`;
+  }
+
+  li.innerHTML = `
+    <div class="news-item__head">
+      <h3 class="news-item__title">${escapeHtml(n.title)}</h3>
+      ${isAdmin ? `<button class="icon-btn is-danger" data-action="del-news" title="Excluir aviso">${ICONS.trash}</button>` : ''}
+    </div>
+    ${n.body ? `<div class="news-item__body">${escapeHtml(n.body)}</div>` : ''}
+    ${linkHtml}
+    <div class="news-item__meta">${escapeHtml(n.author_name || 'Equipe')} · ${escapeHtml(formatStamp(n.created_at))}</div>
+  `;
+  return li;
+}
+
+function renderNews() {
+  const list = $('#news-list');
+  const empty = $('#news-empty');
+  list.innerHTML = '';
+
+  if (state.news.length === 0) {
+    empty.hidden = false;
+    empty.innerHTML =
+      state.user.role === 'admin'
+        ? '<strong>Nenhum aviso ainda</strong>Publique a primeira notícia acima para a equipe.'
+        : '<strong>Nenhum aviso ainda</strong>Quando o administrador publicar algo, aparece aqui.';
+    return;
+  }
+  empty.hidden = true;
+  const frag = document.createDocumentFragment();
+  state.news.forEach((n) => frag.appendChild(announcementCard(n)));
+  list.appendChild(frag);
+}
+
+async function deleteAnnouncement(id) {
+  const n = state.news.find((x) => x.id === id);
+  if (!confirm(`Excluir o aviso "${n ? n.title : ''}"?`)) return;
+  try {
+    await api(`/announcements/${id}`, { method: 'DELETE' });
+    state.news = state.news.filter((x) => x.id !== id);
+    renderNews();
+    toast('Aviso excluído.');
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
 /* ── Alternância de telas ──────────────────────────────────────── */
 function setView(view) {
   state.view = view;
   $('#view-mine').hidden = view !== 'mine';
+  $('#view-news').hidden = view !== 'news';
   $('#view-team').hidden = view !== 'team';
   $$('.nav__link').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
   if (view === 'team') loadTeam().catch((err) => toast(err.message, true));
+  if (view === 'news') loadNews().catch((err) => toast(err.message, true));
 }
 
 function showApp() {
@@ -511,7 +579,13 @@ function showApp() {
   if (state.user.cargo) roleParts.push(state.user.cargo);
   roleEl.textContent = roleParts.join(' · ');
   roleEl.classList.toggle('is-admin', isAdmin);
-  $('#nav').hidden = !isAdmin;
+
+  // Navegação: todos veem "Minhas tarefas" e "Avisos"; só admin vê "Equipe".
+  $('#nav').hidden = false;
+  $$('#nav [data-admin]').forEach((el) => (el.hidden = !isAdmin));
+  // Composer de avisos e opção de e-mail só para o admin.
+  $('#form-news').hidden = !isAdmin;
+  $('#news-notify-wrap').hidden = !(isAdmin && state.config.emailEnabled);
 
   setView('mine');
   loadTasks().catch((err) => toast(err.message, true));
@@ -636,6 +710,42 @@ function bindEvents() {
     } catch (err) {
       toast(err.message, true);
     }
+  });
+
+  // Publicar aviso (admin)
+  $('#form-news').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const title = f.title.value.trim();
+    if (!title) return;
+    try {
+      const { announcement } = await api('/announcements', {
+        method: 'POST',
+        body: {
+          title,
+          body: f.body.value.trim(),
+          link: f.link.value.trim(),
+          notify: f.notify ? f.notify.checked : false,
+        },
+      });
+      state.news.unshift(announcement);
+      renderNews();
+      const notified = state.config.emailEnabled && f.notify && f.notify.checked;
+      f.reset();
+      if (f.notify) f.notify.checked = true;
+      f.title.focus();
+      toast(notified ? 'Aviso publicado e enviado por e-mail.' : 'Aviso publicado.');
+    } catch (err) {
+      toast(err.message, true);
+    }
+  });
+
+  // Excluir aviso (admin)
+  $('#news-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="del-news"]');
+    if (!btn) return;
+    const id = Number(btn.closest('.news-item').dataset.id);
+    deleteAnnouncement(id);
   });
 
   // Filtros

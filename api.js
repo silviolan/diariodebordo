@@ -3,6 +3,7 @@
 const express = require('express');
 const db = require('./db');
 const auth = require('./auth');
+const mailer = require('./mailer');
 
 const router = express.Router();
 
@@ -50,8 +51,22 @@ router.get('/config', (_req, res) => {
     appName: 'Raíz Digital',
     allowRegistration: ALLOW_REGISTRATION,
     requireCode: Boolean(REGISTRATION_CODE),
+    emailEnabled: mailer.isEnabled(),
   });
 });
+
+// Valida um link opcional: null (vazio), string (http/https válido) ou false (inválido).
+function normalizeLink(value) {
+  const s = String(value || '').trim();
+  if (!s) return null;
+  try {
+    const u = new URL(s);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return s;
+  } catch (_e) {
+    /* inválido */
+  }
+  return false;
+}
 
 router.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -318,6 +333,58 @@ router.patch('/admin/users/:id', auth.requireAuth, auth.requireAdmin, async (req
   const { rows } = await db.query('UPDATE users SET cargo = $1 WHERE id = $2 RETURNING *', [cargo, id]);
   if (!rows[0]) return res.status(404).json({ error: 'Usuário não encontrado.' });
   res.json({ user: publicUser(rows[0]) });
+});
+
+// ── Quadro de avisos ─────────────────────────────────────────────────────────
+const ANNOUNCEMENT_SELECT = `
+  SELECT n.id, n.title, n.body, n.link, n.created_at, n.author_id, u.name AS author_name
+    FROM announcements n
+    LEFT JOIN users u ON u.id = n.author_id`;
+
+// Todos os usuários logados veem os avisos.
+router.get('/announcements', auth.requireAuth, async (_req, res) => {
+  const { rows } = await db.query(`${ANNOUNCEMENT_SELECT} ORDER BY n.created_at DESC`);
+  res.json({ announcements: rows });
+});
+
+// Só o admin publica.
+router.post('/announcements', auth.requireAuth, auth.requireAdmin, async (req, res) => {
+  const body = req.body || {};
+  const title = String(body.title || '').trim();
+  const text = String(body.body || '').trim() || null;
+  const link = normalizeLink(body.link);
+  const notify = Boolean(body.notify);
+
+  if (!title) return res.status(400).json({ error: 'Dê um título ao aviso.' });
+  if (title.length > 200) return res.status(400).json({ error: 'O título está muito longo.' });
+  if (text && text.length > 4000) return res.status(400).json({ error: 'O texto está muito longo.' });
+  if (link === false) return res.status(400).json({ error: 'O link precisa começar com http:// ou https://' });
+
+  const ins = await db.query(
+    'INSERT INTO announcements (author_id, title, body, link) VALUES ($1, $2, $3, $4) RETURNING id',
+    [req.auth.id, title, text, link]
+  );
+  const { rows } = await db.query(`${ANNOUNCEMENT_SELECT} WHERE n.id = $1`, [ins.rows[0].id]);
+  const announcement = rows[0];
+
+  // Notificação por e-mail (opcional, sem bloquear a resposta).
+  if (notify && mailer.isEnabled()) {
+    db.query('SELECT email FROM users WHERE id <> $1', [req.auth.id])
+      .then(({ rows: people }) => mailer.sendAnnouncement(announcement, people.map((p) => p.email)))
+      .catch((err) => console.error('[announcements] falha ao enviar e-mail:', err));
+  }
+
+  res.status(201).json({ announcement });
+});
+
+// Só o admin exclui.
+router.delete('/announcements/:id', auth.requireAuth, auth.requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Identificador inválido.' });
+
+  const result = await db.query('DELETE FROM announcements WHERE id = $1', [id]);
+  if (!result.rowCount) return res.status(404).json({ error: 'Aviso não encontrado.' });
+  res.json({ ok: true });
 });
 
 module.exports = router;

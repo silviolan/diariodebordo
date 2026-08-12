@@ -65,6 +65,17 @@ async function init() {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id         SERIAL PRIMARY KEY,
+      author_id  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      title      TEXT NOT NULL,
+      body       TEXT,
+      link       TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
   // Migrações para bancos que já existiam antes destas colunas (idempotente).
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS cargo TEXT;`);
   await pool.query(
@@ -73,6 +84,7 @@ async function init() {
 
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_comments_task ON comments(task_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_announcements_created ON announcements(created_at DESC);`);
 }
 
 module.exports = {

@@ -90,7 +90,8 @@
           <div data-logo></div>
           <nav class="nav" id="nav" hidden>
             <button class="nav__link is-active" data-view="mine">Minhas tarefas</button>
-            <button class="nav__link" data-view="team">Equipe</button>
+            <button class="nav__link" data-view="news">Avisos</button>
+            <button class="nav__link" data-view="team" data-admin hidden>Equipe</button>
           </nav>
           <div class="topbar__user">
             <span class="who">
@@ -143,6 +144,39 @@
 
           <ul class="tasks" id="task-list"></ul>
           <div class="empty" id="task-empty" hidden></div>
+        </section>
+      </main>
+
+      <!-- Avisos (mural para toda a equipe) -->
+      <main id="view-news" class="page" hidden>
+        <section class="composer">
+          <h1 class="page__title">Avisos</h1>
+          <p class="page__sub">Notícias, links e informações para toda a equipe.</p>
+
+          <form id="form-news" class="composer__form" hidden>
+            <input
+              class="composer__title"
+              name="title"
+              placeholder="Título do aviso"
+              maxlength="200"
+              autocomplete="off"
+              required
+            />
+            <textarea class="news__body" name="body" rows="3" placeholder="Escreva a informação (opcional)"></textarea>
+            <div class="composer__row">
+              <input class="composer__desc" name="link" type="url" placeholder="Link (opcional) — https://…" autocomplete="off" />
+              <label class="news__notify" id="news-notify-wrap" hidden>
+                <input type="checkbox" name="notify" checked />
+                <span>Avisar por e-mail</span>
+              </label>
+              <button class="btn btn--primary" type="submit">Publicar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="board">
+          <ul class="news" id="news-list"></ul>
+          <div class="empty" id="news-empty" hidden></div>
         </section>
       </main>
 

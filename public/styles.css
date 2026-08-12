@@ -954,6 +954,121 @@ textarea {
   color: color-mix(in srgb, var(--terra) 70%, var(--muted));
 }
 
+/* ── Quadro de avisos ─────────────────────────────────────────── */
+.news__body {
+  border: 0;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  min-height: 60px;
+}
+
+.news__body:focus {
+  box-shadow: none;
+  outline: 2px solid color-mix(in srgb, var(--pine) 30%, transparent);
+  outline-offset: 1px;
+}
+
+.news__notify {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.news__notify input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pine);
+  cursor: pointer;
+}
+
+.news {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.news-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--terra);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px;
+  animation: rise 0.24s ease both;
+}
+
+.news-item__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.news-item__title {
+  flex: 1;
+  font-size: 1.12rem;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.news-item__body {
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 0.94rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.news-item__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--pine-050);
+  color: var(--pine);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--pine) 22%, transparent);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.news-item__link:hover {
+  background: color-mix(in srgb, var(--pine) 16%, transparent);
+}
+
+.news-item__link svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.news-item__meta {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--faint);
+}
+
 /* ── Estados vazios ───────────────────────────────────────────── */
 .empty {
   text-align: center;
